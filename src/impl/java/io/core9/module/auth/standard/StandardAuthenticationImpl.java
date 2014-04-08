@@ -1,7 +1,8 @@
 package io.core9.module.auth.standard;
 
 import io.core9.module.auth.AuthenticationConnector;
-import io.core9.plugin.database.mongodb.MongoDatabase;
+import io.core9.plugin.database.repository.NoCollectionNamePresentException;
+import io.core9.plugin.database.repository.RepositoryFactory;
 import net.xeoh.plugins.base.annotations.PluginImplementation;
 import net.xeoh.plugins.base.annotations.injections.InjectPlugin;
 
@@ -12,11 +13,19 @@ import org.apache.shiro.mgt.SecurityManager;
 public class StandardAuthenticationImpl extends DefaultSecurityManager implements AuthenticationConnector {
 	
 	@InjectPlugin
-	private MongoDatabase database;
+	private RepositoryFactory factory;
 	
 	@Override
 	public SecurityManager getSecurityManager() {
-		return new DefaultSecurityManager(new StandardRealm(database));
+		try {
+			return new DefaultSecurityManager(
+					new StandardRealm(
+							factory.getRepository(UserEntity.class), 
+							factory.getRepository(RoleEntity.class)));
+		} catch (NoCollectionNamePresentException e) {
+			e.printStackTrace();
+			return new DefaultSecurityManager();
+		}
 	}
 
 }

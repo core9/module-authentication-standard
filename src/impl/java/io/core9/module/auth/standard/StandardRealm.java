@@ -2,7 +2,7 @@ package io.core9.module.auth.standard;
 
 import io.core9.module.auth.wrappers.ServerRequestToken;
 import io.core9.module.auth.wrappers.UsernameVirtualHostPrincipal;
-import io.core9.plugin.database.mongodb.MongoDatabase;
+import io.core9.plugin.database.repository.CrudRepository;
 import io.core9.plugin.server.VirtualHost;
 
 import java.util.HashMap;
@@ -25,10 +25,12 @@ import org.apache.shiro.util.ByteSource;
 
 public class StandardRealm extends AuthorizingRealm {
 	
-	private MongoDatabase database;
+	private CrudRepository<UserEntity> userRepository;
+	private CrudRepository<RoleEntity> roleRepository;
 	
-	public StandardRealm(MongoDatabase database) {
-		this.database = database;
+	public StandardRealm(CrudRepository<UserEntity> userRepository, CrudRepository<RoleEntity> roleRepository) {
+		this.userRepository = userRepository;
+		this.roleRepository = roleRepository;
 	}
 
 	@Override
@@ -41,11 +43,10 @@ public class StandardRealm extends AuthorizingRealm {
         // Retrieve the user object
         UsernameVirtualHostPrincipal principal = (UsernameVirtualHostPrincipal) getAvailablePrincipal(principals);
         VirtualHost vhost = principal.getVirtualHost();
-        Map<String,Object> user = retrieveUserObject(vhost, principal.getUsername());
+        UserEntity user = retrieveUserObject(vhost, principal.getUsername());
         
         //Retrieve roles for user
-        @SuppressWarnings("unchecked")
-		Set<String> roleNames = new HashSet<String>((List<String>) user.get("roles"));
+		Set<String> roleNames = user.getRoles();
         
         //Retrieve permissions for roles
         Set<String> permissions = retrievePermissionsForRoles(vhost, roleNames);
@@ -59,18 +60,16 @@ public class StandardRealm extends AuthorizingRealm {
 	 * @param roleNames
 	 * @return
 	 */
-	@SuppressWarnings("unchecked")
 	private Set<String> retrievePermissionsForRoles(VirtualHost vhost, Set<String> roleNames) {
 		Map<String,Object> query = new HashMap<String,Object>();
 		query.put("configtype", "userrole");
 		Map<String,Object> list = new HashMap<String,Object>();
 		list.put("$in", roleNames);
 		query.put("role", list);
-		List<Map<String,Object>> roles = database.getMultipleResults(
-				(String) vhost.getContext("database"), vhost.getContext("prefix") + "configuration", query);
+		List<RoleEntity> roles = roleRepository.query(vhost, query);
 		Set<String> permissions = new HashSet<String>();
-		for(Map<String,Object> role : roles) {
-			permissions.addAll((List<String>) role.get("permissions"));
+		for(RoleEntity role : roles) {
+			permissions.addAll(role.getPermissions());
 		}
 		return permissions;
 	}
@@ -81,14 +80,14 @@ public class StandardRealm extends AuthorizingRealm {
 		VirtualHost vhost = reqToken.getRequest().getVirtualHost();
 		
 		// Retrieve the user from the database
-		Map<String,Object> user = retrieveUserObject(vhost, reqToken.getUsername());
+		UserEntity user = retrieveUserObject(vhost, reqToken.getUsername());
         SimpleAuthenticationInfo result;
         
         //Parse the password tot he authenticationinfo object
-        String password = (String) user.get("password");
+        String password = user.getPassword();
         UsernameVirtualHostPrincipal principal = new UsernameVirtualHostPrincipal(vhost, reqToken.getUsername());
     	result = new SimpleAuthenticationInfo(principal, password.toCharArray(), getName());
-    	String salt = (String) user.get("salt"); 
+    	String salt = user.getSalt(); 
     	if(salt != null) {
     		result.setCredentialsSalt(ByteSource.Util.bytes(salt));
     	}
@@ -102,7 +101,7 @@ public class StandardRealm extends AuthorizingRealm {
 	 * @return
 	 * @throws AuthenticationException
 	 */
-	private Map<String,Object> retrieveUserObject(VirtualHost vhost, String username) throws AuthenticationException {
+	private UserEntity retrieveUserObject(VirtualHost vhost, String username) throws AuthenticationException {
 		
 		// Null username is invalid
         if (username == null) {
@@ -111,10 +110,9 @@ public class StandardRealm extends AuthorizingRealm {
         
     	Map<String,Object> query = new HashMap<String, Object>();
         query.put("username", username);
+
+        List<UserEntity> users = userRepository.query(vhost, query);
                 
-        List<Map<String,Object>> users = database.getMultipleResults(
-        	(String) vhost.getContext("database"), vhost.getContext("prefix") + "users", query);
-        
         switch(users.size()) {
         case 0:
         	throw new AuthenticationException("No user was found, please register a user first.");

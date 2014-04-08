@@ -6,9 +6,11 @@ import io.core9.plugin.database.repository.CrudEntity;
 
 import java.util.Set;
 
+import org.apache.shiro.crypto.hash.Sha256Hash;
+
 @Collection("core.users")
 public class UserEntity extends AbstractCrudEntity implements CrudEntity {
-
+	
 	private String username;
 	private String password;
 	private String salt;
@@ -44,6 +46,10 @@ public class UserEntity extends AbstractCrudEntity implements CrudEntity {
 
 	public void setRoles(Set<String> roles) {
 		this.roles = roles;
+	}
+	
+	public void hashPassword(String source) {
+		this.password = new Sha256Hash(source, salt).toString();
 	}
 
 }

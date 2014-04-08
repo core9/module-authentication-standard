@@ -6,6 +6,7 @@ import io.core9.plugin.database.repository.RepositoryFactory;
 import net.xeoh.plugins.base.annotations.PluginImplementation;
 import net.xeoh.plugins.base.annotations.injections.InjectPlugin;
 
+import org.apache.shiro.authc.credential.HashedCredentialsMatcher;
 import org.apache.shiro.mgt.DefaultSecurityManager;
 import org.apache.shiro.mgt.SecurityManager;
 
@@ -18,10 +19,10 @@ public class StandardAuthenticationImpl extends DefaultSecurityManager implement
 	@Override
 	public SecurityManager getSecurityManager() {
 		try {
-			return new DefaultSecurityManager(
-					new StandardRealm(
-							factory.getRepository(UserEntity.class), 
-							factory.getRepository(RoleEntity.class)));
+			HashedCredentialsMatcher matcher = new HashedCredentialsMatcher("SHA-256");
+			StandardRealm realm = new StandardRealm(factory.getRepository(UserEntity.class), factory.getRepository(RoleEntity.class));
+			realm.setCredentialsMatcher(matcher);
+			return new DefaultSecurityManager(realm);
 		} catch (NoCollectionNamePresentException e) {
 			e.printStackTrace();
 			return new DefaultSecurityManager();

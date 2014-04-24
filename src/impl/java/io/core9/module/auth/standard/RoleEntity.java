@@ -9,15 +9,15 @@ import java.util.List;
 @Collection("configuration")
 public class RoleEntity extends AbstractCrudEntity implements CrudEntity {
 
-	private String role;
+	private String name;
 	private List<String> permissions;
 
-	public String getRole() {
-		return role;
+	public String getName() {
+		return name;
 	}
 
-	public void setRole(String role) {
-		this.role = role;
+	public void setName(String name) {
+		this.name = name;
 	}
 
 	public List<String> getPermissions() {

@@ -65,7 +65,7 @@ public class StandardRealm extends AuthorizingRealm {
 		query.put("configtype", "userrole");
 		Map<String,Object> list = new HashMap<String,Object>();
 		list.put("$in", roleNames);
-		query.put("role", list);
+		query.put("name", list);
 		List<RoleEntity> roles = roleRepository.query(vhost, query);
 		Set<String> permissions = new HashSet<String>();
 		for(RoleEntity role : roles) {

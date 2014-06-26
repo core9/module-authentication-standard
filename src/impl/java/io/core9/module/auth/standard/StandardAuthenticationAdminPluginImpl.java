@@ -47,14 +47,14 @@ public class StandardAuthenticationAdminPluginImpl extends AbstractAdminPlugin i
 			switch(type) {
 			case "user":
 				if(request.getMethod() == Method.POST) {
-					request.getResponse().end(createUser(request.getVirtualHost(), request.getBodyAsMap()));
+					request.getResponse().end(createUser(request.getVirtualHost(), request.getBodyAsMap().toBlocking().last()));
 				} else {
 					request.getResponse().sendJsonArray(getUserList(request.getVirtualHost()));
 				}
 				break;
 			case "role":
 				if(request.getMethod() == Method.POST) {
-					addRole(request.getVirtualHost(), request.getBodyAsMap());
+					addRole(request.getVirtualHost(), request.getBodyAsMap().toBlocking().last());
 				} else {
 					request.getResponse().sendJsonArray(getRoleList(request.getVirtualHost()));
 				}
@@ -72,7 +72,7 @@ public class StandardAuthenticationAdminPluginImpl extends AbstractAdminPlugin i
 			switch(type) {
 			case "user":
 				if(request.getMethod() == Method.PUT) {
-					request.getResponse().end(updateUser(request.getVirtualHost(), request.getBodyAsMap()));
+					request.getResponse().end(updateUser(request.getVirtualHost(), request.getBodyAsMap().toBlocking().last()));
 				} else if (request.getMethod() == Method.DELETE) {
 					deleteUser(request.getVirtualHost(), id);
 					request.getResponse().end();

@@ -4,6 +4,8 @@ import io.core9.plugin.database.repository.AbstractCrudEntity;
 import io.core9.plugin.database.repository.Collection;
 import io.core9.plugin.database.repository.CrudEntity;
 
+import java.math.BigInteger;
+import java.security.SecureRandom;
 import java.util.Set;
 
 import org.apache.shiro.crypto.hash.Sha256Hash;
@@ -49,6 +51,10 @@ public class UserEntity extends AbstractCrudEntity implements CrudEntity {
 	}
 	
 	public void hashPassword(String source) {
+		if(source == null) {
+			SecureRandom random = new SecureRandom();
+			source = new BigInteger(130, random).toString(32);
+		}
 		this.password = new Sha256Hash(source, salt).toString();
 	}
 

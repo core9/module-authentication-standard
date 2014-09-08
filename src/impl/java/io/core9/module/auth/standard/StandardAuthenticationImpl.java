@@ -8,16 +8,15 @@ import net.xeoh.plugins.base.annotations.injections.InjectPlugin;
 
 import org.apache.shiro.authc.credential.HashedCredentialsMatcher;
 import org.apache.shiro.mgt.DefaultSecurityManager;
-import org.apache.shiro.mgt.SecurityManager;
 
 @PluginImplementation
-public class StandardAuthenticationImpl extends DefaultSecurityManager implements AuthenticationConnector {
+public class StandardAuthenticationImpl implements AuthenticationConnector {
 	
 	@InjectPlugin
 	private RepositoryFactory factory;
 	
 	@Override
-	public SecurityManager getSecurityManager() {
+	public DefaultSecurityManager getSecurityManager() {
 		try {
 			HashedCredentialsMatcher matcher = new HashedCredentialsMatcher("SHA-256");
 			StandardRealm realm = new StandardRealm(factory.getRepository(UserEntity.class), factory.getRepository(RoleEntity.class));
